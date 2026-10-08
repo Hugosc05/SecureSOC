@@ -1,61 +1,69 @@
 # SecureSOC
 
-**AI-Powered Local SOC & Agent Security Lab**
+**SOC local con IA y laboratorio de seguridad de agentes**
 
-SecureSOC is a security operations platform that runs entirely on one workstation. It combines deterministic threat detection with a local LLM agent that investigates incidents — and treats that agent as an **untrusted component**. The agent can reason and propose actions. It cannot authorise them: every tool request goes through an independent policy engine, high-impact actions need human approval, and everything is written to a tamper-evident audit log.
+[![CI](https://github.com/Hugosc05/SecureSOC/actions/workflows/ci.yml/badge.svg)](https://github.com/Hugosc05/SecureSOC/actions/workflows/ci.yml)
+![Coste](https://img.shields.io/badge/coste-0%E2%82%AC-2ea44f)
+![Licencia](https://img.shields.io/badge/licencia-Apache--2.0-blue)
 
-> **Status: Phase 1 — Foundation.** The repository skeleton, API, database, migrations and dashboard shell are in place. Detection, incidents and the agent arrive in later phases (see [Roadmap](#roadmap)).
+SecureSOC es una plataforma de operaciones de seguridad (SOC) que se ejecuta entera en un solo ordenador. Combina detección de amenazas determinista con un agente LLM local que investiga incidentes, y trata a ese agente como un **componente no confiable**. El agente puede razonar y proponer acciones, pero no puede autorizarlas:
+
+- toda petición de herramienta pasa por un motor de políticas independiente;
+- las acciones de alto impacto necesitan aprobación humana;
+- todo queda registrado en un log de auditoría a prueba de manipulaciones.
+
+> **Estado: Fase 1 — Foundation.** Ya están el esqueleto del repositorio, la API, la base de datos, las migraciones y la estructura del dashboard. La detección, los incidentes y el agente llegan en las siguientes fases (ver [Roadmap](#roadmap)).
 
 ```text
-events → ingestion → normalisation → deterministic detection → correlation → alert → incident
-                                                                                       │
-                     audit log ◄── executor ◄── [human approval] ◄── policy engine ◄── AI agent → tool request
+eventos → ingesta → normalización → detección determinista → correlación → alerta → incidente
+                                                                                    │
+                 audit log ◄── ejecutor ◄── [aprobación humana] ◄── policy engine ◄── agente IA → petición de tool
 ```
 
-| Principle | Meaning |
+| Principio | Significado |
 |---|---|
-| LLM = orchestration | Interprets evidence, selects tools, writes reports |
-| Policy engine = authorisation | Deterministic `ALLOW` / `DENY` / `REQUIRE_APPROVAL`, deny by default |
-| Human = control | Approves sensitive actions; the agent has no way to approve |
-| Audit = traceability | Append-only, written by code, never by the model |
-| Cost = €0 | No paid API, cloud, hosting or SaaS. Everything is local. |
+| LLM = orquestación | Interpreta evidencias, elige herramientas y redacta informes |
+| Policy engine = autorización | `ALLOW` / `DENY` / `REQUIRE_APPROVAL` deterministas; por defecto, denegar |
+| Humano = control | Aprueba las acciones sensibles; el agente no tiene ninguna forma de aprobar |
+| Auditoría = trazabilidad | Solo se añade (append-only), la escribe el código y nunca el modelo |
+| Coste = 0 € | Sin APIs de pago, cloud, hosting ni SaaS. Todo es local. |
 
-## Quick start
+## Puesta en marcha
 
-Requirements: Docker (Desktop or Engine), Git. Optional for development: Python 3.12 + [uv](https://docs.astral.sh/uv/), Node.js ≥ 22.
+Requisitos: Docker (Desktop o Engine) y Git. Para desarrollar, además: Python 3.12 + [uv](https://docs.astral.sh/uv/) y Node.js ≥ 22.
 
-```bash
-cp .env.example .env          # PowerShell: Copy-Item .env.example .env
-# edit .env and set POSTGRES_PASSWORD
+```powershell
+Copy-Item .env.example .env    # Linux/macOS: cp .env.example .env
+# edita .env y pon una contraseña en POSTGRES_PASSWORD
 docker compose up -d
 ```
 
-Open <http://localhost:3000>. The status pill in the top bar should read **API ready**.
+Abre <http://localhost:3000>. El indicador de la barra superior debería poner **API ready**.
 
-| Service | URL | Notes |
+| Servicio | URL | Notas |
 |---|---|---|
-| Dashboard | http://localhost:3000 | nginx serving the React build, proxies `/api` |
+| Dashboard | http://localhost:3000 | nginx sirve el build de React y reenvía `/api` a la API |
 | API | http://localhost:8000/api/v1/health | FastAPI |
-| PostgreSQL | localhost:5433 | Host port 5433 avoids clashing with a local install |
+| PostgreSQL | localhost:5433 | Puerto 5433 para no chocar con una instalación local en el 5432 |
 
-All ports are bound to `127.0.0.1` only.
+Todos los puertos escuchan solo en `127.0.0.1`: nada es accesible desde tu red.
 
-## Development
+## Desarrollo
 
 ```bash
-docker compose up -d db                      # database only
+docker compose up -d db                      # solo la base de datos
 
 cd apps/api
-uv sync                                      # create .venv from uv.lock
+uv sync                                      # crea .venv a partir de uv.lock
 uv run alembic upgrade head
 uv run uvicorn securesoc.main:app --reload   # http://localhost:8000/api/docs
 
 cd apps/web
 npm install
-npm run dev                                  # http://localhost:3000 (proxies /api to :8000)
+npm run dev                                  # http://localhost:3000 (reenvía /api al :8000)
 ```
 
-### Checks (same as CI)
+### Comprobaciones (las mismas que el CI)
 
 ```bash
 # API
@@ -64,47 +72,47 @@ uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pyt
 npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-If the database is not running, integration tests are skipped locally. In CI they are mandatory.
+Si la base de datos no está arrancada, los tests de integración se saltan en local. En el CI son obligatorios.
 
-## Repository layout
+## Estructura del repositorio
 
 ```text
-apps/api     FastAPI backend (single Python package `securesoc`, modules enforced by an import-boundary test)
-apps/web     React + TypeScript + Vite + Tailwind dashboard
-docs/        planning, ADRs, architecture and security documentation
-scripts/     helper scripts (e.g. read-only system report for Windows)
+apps/api     Backend FastAPI (un único paquete Python `securesoc`; un test vigila las fronteras entre módulos)
+apps/web     Dashboard en React + TypeScript + Vite + Tailwind
+docs/        planificación, decisiones de arquitectura (ADR) y documentación de seguridad
+scripts/     scripts de apoyo (p. ej. informe de solo lectura del sistema Windows)
 ```
 
-Later phases add `rules/`, `policies/`, `datasets/`, `redteam/` and `labs/`.
+En las siguientes fases se añaden `rules/`, `policies/`, `datasets/`, `redteam/` y `labs/`.
 
-## Security
+## Seguridad
 
-- Secrets live only in `.env` (git-ignored); see `.env.example`.
-- Containers run as non-root with read-only filesystems, `cap_drop: ALL` and `no-new-privileges`.
-- The dashboard sends a strict Content-Security-Policy, and rendering raw HTML is blocked by lint.
-- Readiness checks never return connection errors to clients.
-- Offensive lab tooling targets **only the project's own isolated VMs**.
+- Los secretos solo viven en `.env`, que está en `.gitignore`. La plantilla es `.env.example`.
+- Los contenedores no corren como root: sistema de archivos de solo lectura, `cap_drop: ALL` y `no-new-privileges`.
+- El dashboard envía una Content-Security-Policy estricta, y el lint prohíbe renderizar HTML en bruto.
+- Las comprobaciones de salud nunca devuelven errores de conexión al cliente.
+- Las herramientas ofensivas del laboratorio atacan **solo a las propias VMs aisladas del proyecto**.
 
-See [SECURITY.md](SECURITY.md).
+Más detalles en [SECURITY.md](SECURITY.md).
 
 ## Roadmap
 
-| Phase | Scope | Status |
+| Fase | Alcance | Estado |
 |---|---|---|
-| 0 | Design, hardware analysis, model choice | ✅ |
-| 1 | Foundation: repo, Docker, PostgreSQL, FastAPI, React, migrations, CI | ✅ |
-| 2 | Ingestion: canonical event schema, Linux auth / UFW parsers | ⏳ |
-| 3 | Detection: Sigma-subset engine, SSH brute force, port scan, login after failures | |
-| 4 | Incidents: correlation, timeline, MITRE ATT&CK mapping | |
-| 5 | Dashboard: incidents, evidence, alert explanations | |
-| 6 | AI: Ollama provider, investigation agent, read-only tools | |
-| 7 | Security layer: tool registry, policy engine, audit chain, RBAC | |
-| 8 | Human approval workflow | |
-| 9 | Red team: prompt injection, tool abuse, regression benchmark | |
-| 10 | Lab demo, evaluation, documentation | |
+| 0 | Diseño, análisis de hardware y elección del modelo | ✅ |
+| 1 | Foundation: repositorio, Docker, PostgreSQL, FastAPI, React, migraciones y CI | ✅ |
+| 2 | Ingesta: esquema común de eventos y parsers de Linux auth / UFW | ⏳ |
+| 3 | Detección: motor con un subconjunto de Sigma (fuerza bruta SSH, escaneo de puertos, login tras fallos) | |
+| 4 | Incidentes: correlación, timeline y mapeo a MITRE ATT&CK | |
+| 5 | Dashboard: incidentes, evidencias y explicación de las alertas | |
+| 6 | IA: proveedor Ollama, agente investigador y herramientas de solo lectura | |
+| 7 | Capa de seguridad: registro de herramientas, policy engine, cadena de auditoría y RBAC | |
+| 8 | Flujo de aprobación humana | |
+| 9 | Red team: prompt injection, abuso de herramientas y benchmark de regresión | |
+| 10 | Demo del laboratorio, evaluación y documentación | |
 
-The full plan is in [`docs/planning/fase-0-planificacion.md`](docs/planning/fase-0-planificacion.md) (Spanish) and the decisions are in [`docs/adr/`](docs/adr/README.md).
+El plan completo está en [`docs/planning/fase-0-planificacion.md`](docs/planning/fase-0-planificacion.md) y las decisiones en [`docs/adr/`](docs/adr/README.md).
 
-## License
+## Licencia
 
 [Apache-2.0](LICENSE)

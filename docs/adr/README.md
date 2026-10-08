@@ -16,7 +16,7 @@ Each decision records what was chosen, the alternative that was considered, and 
 | D-10 | High-risk actions are simulated in the MVP | Accepted | Real nftables on the lab VM | Safety first; real response comes post-MVP |
 | D-11 | Stdlib-only log shipper on the lab VM | Accepted | rsyslog forwarding, Vector, Fluent Bit | Zero dependencies on the victim host |
 | D-12 | uv for Python environments and lockfile | Accepted | pip + venv | Reproducible lockfile, fast |
-| D-13 | Code and technical docs in English; academic write-up in Spanish | Accepted | All Spanish | Portfolio reach |
+| D-13 | Documentation (README, docs) in Spanish; code, identifiers and commit messages in English | Accepted (revised 2026-10-08) | All English | The author is a Spanish speaker and the project doubles as a TFG; code stays in English by convention |
 | D-14 | Apache-2.0 license | Accepted | MIT | Includes an explicit patent grant |
 | D-15 | PostgreSQL exposed on host port 5433 | Accepted | 5432 | Avoids clashing with existing local installs |
 | D-16 | Frontend served by `nginx-unprivileged`; `/api` reverse-proxied | Accepted | Separate origins + CORS | Same origin, strict CSP, non-root |
