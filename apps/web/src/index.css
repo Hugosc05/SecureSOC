@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+/*
+ * SecureSOC design tokens.
+ * Blue = interaction/brand. Red/amber/green are reserved for severity and health
+ * states only, so colour always carries meaning.
+ * Fonts are system stacks: no external font CDN (local-first, no third-party requests).
+ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Consolas, 'Liberation Mono', monospace;
+
+  --color-canvas: #0b1020;
+  --color-surface: #111831;
+  --color-surface-2: #172042;
+  --color-border: #243056;
+  --color-text: #e3e8f4;
+  --color-muted: #8b96b5;
+  --color-faint: #5d6890;
+
+  --color-accent: #3b82f6;
+  --color-accent-soft: #1d3a73;
+
+  --color-sev-critical: #ef4444;
+  --color-sev-high: #f97316;
+  --color-sev-medium: #f59e0b;
+  --color-sev-low: #38bdf8;
+  --color-ok: #22c55e;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,85 @@
+# SecureSOC local stack:  docker compose up -d   ->  http://localhost:3000
+# Development (API/web on your machine):  docker compose up -d db
+#
+# Every published port is bound to 127.0.0.1: nothing is reachable from your LAN.
+# Ollama is NOT part of this file: it runs natively on the host (ADR D-01).
+
+name: securesoc
+
+x-api-env: &api-env
+  SECURESOC_ENVIRONMENT: production
+  SECURESOC_LOG_LEVEL: ${SECURESOC_LOG_LEVEL:-INFO}
+  SECURESOC_DB_HOST: db
+  SECURESOC_DB_PORT: "5432"
+  POSTGRES_DB: ${POSTGRES_DB:-securesoc}
+  POSTGRES_USER: ${POSTGRES_USER:-securesoc}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (copy .env.example)}
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: [/tmp]
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-securesoc}
+      POSTGRES_USER: ${POSTGRES_USER:-securesoc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (copy .env.example)}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=50"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits: { memory: 512m }
+
+  # One-shot: applies Alembic migrations, then exits. The API waits for it.
+  migrate:
+    image: securesoc-api:local
+    build: ./apps/api
+    command: ["alembic", "upgrade", "head"]
+    environment: *api-env
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+    <<: *hardening
+
+  api:
+    image: securesoc-api:local
+    build: ./apps/api
+    restart: unless-stopped
+    environment: *api-env
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    deploy:
+      resources:
+        limits: { memory: 384m }
+    <<: *hardening
+
+  web:
+    image: securesoc-web:local
+    build: ./apps/web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3000}:8080"
+    depends_on:
+      api: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 128m }
+    <<: *hardening
+
+volumes:
+  pgdata:
