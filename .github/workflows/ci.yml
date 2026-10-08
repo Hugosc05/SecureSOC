@@ -39,7 +39,7 @@ jobs:
       POSTGRES_PASSWORD: ci-only-password
       SECURESOC_REQUIRE_DB: "1"   # integration tests must fail, not skip
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.32"
@@ -56,7 +56,7 @@ jobs:
       run:
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -72,7 +72,7 @@ jobs:
     name: Security (dependencies, secrets)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
@@ -96,6 +96,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [api, web]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: cp .env.example .env
       - run: docker compose build
