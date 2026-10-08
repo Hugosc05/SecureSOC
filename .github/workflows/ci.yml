@@ -40,7 +40,7 @@ jobs:
       SECURESOC_REQUIRE_DB: "1"   # integration tests must fail, not skip
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.11.32"
       - run: uv sync --frozen --python 3.12
@@ -75,7 +75,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.11.32"
       - name: Python dependency audit
